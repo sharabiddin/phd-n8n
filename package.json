@@ -4,7 +4,7 @@
   "description": "n8n workflow automation platform deployed on Heroku",
   "main": "index.js",
   "scripts": {
-    "start": "n8n start",
+    "start": "N8N_PORT=$PORT N8N_HOST=0.0.0.0 n8n start",
     "dev": "docker-compose up -d",
     "stop": "docker-compose down",
     "logs": "docker-compose logs -f n8n",
