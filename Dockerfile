@@ -22,4 +22,6 @@ RUN npm ci --omit=dev --cache /tmp/empty-cache
 
 EXPOSE 5678
 
+RUN mkdir -p /home/node/.n8n
+
 CMD ["n8n", "start"]
