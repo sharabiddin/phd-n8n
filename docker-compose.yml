@@ -15,7 +15,7 @@ services:
       - n8n-network
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.116.0
     container_name: n8n
     restart: always
     expose:
