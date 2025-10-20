@@ -83,6 +83,7 @@ jobs:
           N8N_USER_MANAGEMENT_JWT_SECRET=jwt_secret_key_replace_with_random_string
           N8N_TRUST_PROXY=true
           N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+          N8N_DISABLE_UI_RATE_LIMITING=true
           N8N_RUNNERS_ENABLED=true
           DB_SQLITE_POOL_SIZE=1
           N8N_BLOCK_ENV_ACCESS_IN_NODE=true
