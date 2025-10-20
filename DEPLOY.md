@@ -1,141 +1,138 @@
-# n8n Heroku Deployment Guide
+# n8n Local Development Setup
 
 ## Prerequisites
 
-- [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed
-- Docker installed (for local development)
+- Docker and Docker Compose installed
 - Git repository initialized
 
-## Quick Deployment Steps
+## Quick Setup
 
-### 1. Create Heroku App
+### 1. Clone and Setup Environment
 ```bash
-heroku create your-app-name
+git clone <your-repo-url>
+cd phd-n8n
+cp .env.example .env
 ```
 
-### 2. Set Container Stack
+### 2. Configure Environment Variables
+Edit the `.env` file with your preferred settings:
 ```bash
-heroku stack:set container -a your-app-name
+# Update authentication credentials
+N8N_BASIC_AUTH_USER=admin
+N8N_BASIC_AUTH_PASSWORD=your_secure_password
+
+# Generate secure keys (32 characters each)
+N8N_ENCRYPTION_KEY=your_32_character_encryption_key
+N8N_USER_MANAGEMENT_JWT_SECRET=your_jwt_secret_key
 ```
 
-### 3. Add PostgreSQL Database
+### 3. Start the Application
 ```bash
-heroku addons:create heroku-postgresql:mini -a your-app-name
+npm start
 ```
 
-### 4. Set Environment Variables
+### 4. Access n8n
+Open your browser and go to: http://localhost:5678
+
+Log in with your configured credentials (default: admin/password)
+
+## Available Commands
+
+### Start Services
 ```bash
-# Basic Auth
-heroku config:set N8N_BASIC_AUTH_ACTIVE=true -a your-app-name
-heroku config:set N8N_BASIC_AUTH_USER=admin -a your-app-name
-heroku config:set N8N_BASIC_AUTH_PASSWORD=your_secure_password -a your-app-name
-
-# Host Configuration
-heroku config:set N8N_HOST=your-app-name.herokuapp.com -a your-app-name
-heroku config:set N8N_PROTOCOL=https -a your-app-name
-heroku config:set WEBHOOK_URL=https://your-app-name.herokuapp.com/ -a your-app-name
-
-# Database
-heroku config:set DATABASE_TYPE=postgresdb -a your-app-name
-heroku config:set DB_POSTGRESDB_SCHEMA=public -a your-app-name
-
-# Security Keys (generate random 32-character strings)
-heroku config:set N8N_ENCRYPTION_KEY=your_32_character_encryption_key -a your-app-name
-heroku config:set N8N_USER_MANAGEMENT_JWT_SECRET=your_jwt_secret_key -a your-app-name
-
-# Timezone
-heroku config:set GENERIC_TIMEZONE=UTC -a your-app-name
+npm start          # Start n8n and PostgreSQL in detached mode
 ```
 
-### 5. Deploy to Heroku
+### Stop Services
 ```bash
-git add .
-git commit -m "Deploy n8n to Heroku"
-git push heroku main
+npm stop           # Stop all services
 ```
 
-### 6. Open Your App
+### View Logs
 ```bash
-heroku open -a your-app-name
+npm run logs       # Follow n8n logs in real-time
 ```
 
-## Local Development
-
-### Start Local Environment
+### Restart Services
 ```bash
-npm run dev
+npm run restart    # Restart all services
 ```
 
-### Stop Local Environment
+### Clean Reset
 ```bash
-npm run stop
-```
-
-### View Local Logs
-```bash
-npm run logs
+npm run clean      # Stop services and remove all data volumes
 ```
 
 ## Configuration
 
 ### Environment Variables
 
-The app uses the following environment variables:
+The application uses these key environment variables (see `.env.example`):
 
 - `N8N_BASIC_AUTH_USER` - Username for basic authentication
 - `N8N_BASIC_AUTH_PASSWORD` - Password for basic authentication
-- `N8N_HOST` - Your Heroku app domain
-- `N8N_PROTOCOL` - Use `https` for production
-- `WEBHOOK_URL` - Full webhook URL for your app
-- `DATABASE_TYPE` - Set to `postgresdb` for PostgreSQL
+- `N8N_HOST` - Host address (localhost for local development)
+- `N8N_PORT` - Port number (5678)
+- `N8N_PROTOCOL` - Protocol (http for local, https for production)
+- `WEBHOOK_URL` - Full webhook URL
+- `DATABASE_TYPE` - Database type (postgresdb)
 - `N8N_ENCRYPTION_KEY` - 32-character encryption key
 - `N8N_USER_MANAGEMENT_JWT_SECRET` - JWT secret for user management
 
 ### Database Configuration
 
-Heroku automatically populates these from the PostgreSQL addon:
-- `DATABASE_URL` - Complete database connection string
-- Additional `DB_POSTGRESDB_*` variables are auto-configured
+PostgreSQL is automatically configured via Docker Compose:
+- **Database**: n8n
+- **User**: n8n
+- **Password**: n8n
+- **Host**: postgres (internal Docker network)
+- **Port**: 5432
+
+## Data Persistence
+
+- n8n data is stored in the `n8n_data` Docker volume
+- PostgreSQL data is stored in the `postgres_data` Docker volume
+- Use `npm run clean` to remove all data and start fresh
 
 ## Troubleshooting
 
-### View Heroku Logs
+### View All Logs
 ```bash
-heroku logs --tail -a your-app-name
+docker-compose logs -f
 ```
 
-### Check Config Variables
+### Check Running Containers
 ```bash
-heroku config -a your-app-name
+docker-compose ps
 ```
 
-### Restart App
+### Reset Everything
 ```bash
-heroku restart -a your-app-name
+npm run clean
+npm start
 ```
 
-### Scale Up/Down
+### Manual Database Access
 ```bash
-heroku ps:scale web=1 -a your-app-name
+docker-compose exec postgres psql -U n8n -d n8n
 ```
 
 ## Security Notes
 
-1. **Change default passwords** - Update `N8N_BASIC_AUTH_PASSWORD` before deployment
-2. **Generate secure keys** - Create random strings for encryption and JWT secrets
-3. **Use HTTPS** - Always set `N8N_PROTOCOL=https` in production
-4. **Environment variables** - Never commit `.env` file to version control
+1. **Change default passwords** - Update credentials in `.env` before first run
+2. **Generate secure keys** - Create random 32-character strings for encryption keys
+3. **Environment files** - Never commit `.env` file to version control
+4. **Network access** - Application is accessible only on localhost by default
 
 ## URLs
 
-- **App URL**: https://your-app-name.herokuapp.com/
-- **n8n Editor**: https://your-app-name.herokuapp.com/
-- **Webhooks**: https://your-app-name.herokuapp.com/webhook/
+- **n8n Editor**: http://localhost:5678/
+- **Webhooks**: http://localhost:5678/webhook/
+- **API**: http://localhost:5678/api/
 
-## Cost Estimation
+## Development Tips
 
-- **Heroku Dyno**: $7/month (Basic)
-- **PostgreSQL**: $9/month (Mini)
-- **Total**: ~$16/month
-
-For higher traffic, consider upgrading to Standard dynos and Standard PostgreSQL plans.
+- Use `npm run logs` to monitor application behavior
+- The PostgreSQL database persists data between restarts
+- Use `npm run clean` for a completely fresh start
+- Environment variables can be modified in `.env` (restart required)

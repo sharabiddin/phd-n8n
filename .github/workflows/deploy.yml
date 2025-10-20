@@ -1,0 +1,87 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        password: ${{ secrets.VPS_PASSWORD }}
+        port: 22
+        script: |
+          # Navigate to deployment directory
+          cd /opt/phd-n8n || { echo "Creating deployment directory"; mkdir -p /opt/phd-n8n; cd /opt/phd-n8n; }
+          
+          # Stop existing containers if running
+          if [ -f docker-compose.yml ]; then
+            docker-compose down
+          fi
+          
+          # Backup existing .env if it exists
+          if [ -f .env ]; then
+            cp .env .env.backup
+          fi
+          
+          # Remove old files (except .env)
+          find . -not -name '.env' -not -name '.env.backup' -not -name 'n8n_data' -not -name 'postgres_data' -type f -delete
+          find . -not -name '.env' -not -name '.env.backup' -not -name 'n8n_data' -not -name 'postgres_data' -type d -empty -delete 2>/dev/null || true
+          
+          # Clone the repository
+          git clone https://github.com/${{ github.repository }}.git temp_repo
+          
+          # Move files from temp repo to current directory
+          mv temp_repo/* . 2>/dev/null || true
+          mv temp_repo/.* . 2>/dev/null || true
+          rm -rf temp_repo
+          
+          # Restore .env if it was backed up, otherwise use production template
+          if [ -f .env.backup ]; then
+            mv .env.backup .env
+          else
+            cp .env.example .env
+            # Update .env for production
+            sed -i 's/localhost/phd.sharpy.dev/g' .env
+            sed -i 's/http:/https:/g' .env
+            sed -i 's/N8N_SECURE_COOKIE=false/N8N_SECURE_COOKIE=true/g' .env
+          fi
+          
+          # Install Docker and Docker Compose if not present
+          if ! command -v docker &> /dev/null; then
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sh get-docker.sh
+            systemctl enable docker
+            systemctl start docker
+          fi
+          
+          if ! command -v docker-compose &> /dev/null; then
+            curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            chmod +x /usr/local/bin/docker-compose
+          fi
+          
+          # Set proper SSL certificate permissions
+          if [ -f ssl/phd.sharpy.dev.key ]; then
+            chmod 600 ssl/phd.sharpy.dev.key
+          fi
+          
+          # Start the application
+          docker-compose up -d
+          
+          # Wait for containers to be ready
+          sleep 10
+          
+          # Show status
+          docker-compose ps
+          echo "Deployment completed successfully!"
+          echo "n8n should be available at https://phd.sharpy.dev"

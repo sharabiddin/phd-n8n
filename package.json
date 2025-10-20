@@ -1,21 +1,21 @@
 {
   "name": "phd-n8n",
   "version": "1.0.0",
-  "description": "n8n workflow automation platform deployed on Heroku",
+  "description": "n8n workflow automation platform for local development",
   "main": "index.js",
   "scripts": {
-    "start": "N8N_PORT=$PORT N8N_HOST=0.0.0.0 n8n start",
-    "dev": "docker-compose up -d",
+    "start": "docker-compose up -d",
     "stop": "docker-compose down",
     "logs": "docker-compose logs -f n8n",
-    "heroku-release": "n8n start"
+    "restart": "docker-compose restart",
+    "clean": "docker-compose down -v"
   },
   "keywords": [
     "n8n",
     "workflow",
     "automation",
-    "heroku",
-    "docker"
+    "docker",
+    "local-development"
   ],
   "author": "",
   "license": "MIT",
@@ -28,6 +28,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://git.heroku.com/phd-n8n.git"
+    "url": ""
   }
 }
