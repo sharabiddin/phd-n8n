@@ -122,3 +122,6 @@ systemctl status nginx
 - Local access: http://localhost:5678
 - Production access: https://phd.sharpy.dev
 - Default credentials: admin / SecurePassword123!
+
+## Deployment Status
+Last updated: 2025-10-20
