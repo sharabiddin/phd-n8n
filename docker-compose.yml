@@ -1,12 +1,27 @@
 version: '3.8'
 
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/ssl/certs
+    depends_on:
+      - n8n
+    networks:
+      - n8n-network
+
   n8n:
     image: n8nio/n8n:latest
     container_name: n8n
     restart: always
-    ports:
-      - "5678:5678"
+    expose:
+      - "5678"
     environment:
       - NODE_ENV=production
       - N8N_BASIC_AUTH_ACTIVE=true
